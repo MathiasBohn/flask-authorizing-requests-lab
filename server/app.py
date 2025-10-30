@@ -87,12 +87,28 @@ class CheckSession(Resource):
 class MemberOnlyIndex(Resource):
     
     def get(self):
-        pass
+        user_id = session.get('user_id')
+        
+        if not user_id:
+            return {'message': 'Unauthorized access'}, 401
+        
+        articles = Article.query.filter(Article.is_member_only == True).all()
+        return ArticleSchema().dump(articles, many=True), 200
 
 class MemberOnlyArticle(Resource):
     
     def get(self, id):
-        pass
+        user_id = session.get('user_id')
+        
+        if not user_id:
+            return {'message': 'Unauthorized access'}, 401
+        
+        article = Article.query.filter(Article.id == id).first()
+        
+        if article:
+            return ArticleSchema().dump(article), 200
+        else:
+            return {'message': 'Article not found'}, 404
 
 api.add_resource(ClearSession, '/clear', endpoint='clear')
 api.add_resource(IndexArticle, '/articles', endpoint='article_list')
@@ -102,7 +118,6 @@ api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(CheckSession, '/check_session', endpoint='check_session')
 api.add_resource(MemberOnlyIndex, '/members_only_articles', endpoint='member_index')
 api.add_resource(MemberOnlyArticle, '/members_only_articles/<int:id>', endpoint='member_article')
-
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
